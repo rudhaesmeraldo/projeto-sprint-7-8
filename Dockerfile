@@ -13,6 +13,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 # copiar o restante do código
 COPY ./src ./src
 COPY ./scripts ./scripts
+COPY ./dataset ./dataset 
 
 # comando padrão, posteriormente vou alterar este comando para iniciar o bot do Telegram
 CMD ["python", "-c", "print('Ambiente para o chatbot está funcionando!!')"]
