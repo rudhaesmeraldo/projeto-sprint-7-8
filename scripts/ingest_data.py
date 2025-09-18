@@ -21,7 +21,6 @@ def inicializar_bedrock_client():
     bedrock_client = boto3.client(
         service_name='bedrock-runtime',
         region_name=region_name,
-        
     )
     print('✅ Cliente Bedrock inicializado com sucesso.')
     return bedrock_client
