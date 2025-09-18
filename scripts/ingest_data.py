@@ -3,12 +3,14 @@ import boto3
 from dotenv import load_dotenv
 from langchain_community.document_loaders import PyPDFLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain_community.embeddings import BedrockEmbeddings
+from langchain_aws import BedrockEmbeddings
+from langchain_community.vectorstores import Chroma
 
 # carrega as variáveis de ambiente do arquivo .env
 load_dotenv()
 
 DATA_PATH = 'dataset/'
+CHROMA_PATH = 'chroma_db' # aqui é onde o bd vetorial será salvo
 
 def inicializar_bedrock_client():
     # inicializa e retorna o cliente do Bedrock Runtime
@@ -24,7 +26,7 @@ def inicializar_bedrock_client():
     return bedrock_client
 
 def carregar_e_dividir_documentos(bedrock_client):
-    # carrega os documentos pdf da pasta 'dataset', os divide em chunks e gera embeddings
+    # carrega, processa os documentos e salva no ChromaDB
     
     print(f'⏳ Carregando documentos da pasta: {DATA_PATH}')
 
@@ -55,19 +57,18 @@ def carregar_e_dividir_documentos(bedrock_client):
         client=bedrock_client,
         model_id='amazon.titan-embed-text-v1'
     )
+    print('✅ Modelo de embedding criado com sucesso.')
 
-    # exemplo para verificar se a conexão e a geração de embeddings funcionam
-    primeiro_chunk_texto = chunks[0].page_content
-    embedding_exemplo = modelo_embedding.embed_query(primeiro_chunk_texto)
-    
-    print('✅ Embeddings gerados com sucesso!')
-    print(f'\n--- Exemplo de Vetor de Embedding (primeiros 10 de {len(embedding_exemplo)} valores) ---')
-    print(embedding_exemplo[:10])
-    print('-----------------------------------------------------------------')
+    # Salva os chunks e embeddings no ChromaDB
+    print(f'⏳ Salvando chunks e embeddings no ChromaDB em: {CHROMA_PATH}...')
+    # A função from_documents já calcula os embeddings para cada chunk e os salva
+    db = Chroma.from_documents(
+        documents=chunks,
+        embedding=modelo_embedding,
+        persist_directory=CHROMA_PATH
+    )
+    print(f'✅ {len(chunks)} chunks salvos com sucesso no ChromaDB.')
 
-    return chunks, modelo_embedding
-
-# bloco para o script seja executado
 if __name__ == '__main__':
     cliente_bedrock = inicializar_bedrock_client()
     if cliente_bedrock:
