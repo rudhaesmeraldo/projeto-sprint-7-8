@@ -212,3 +212,7 @@ chroma_db/
 
 ##arquivos temporarios de teste
 temp_yuri.txt
+
+# dependências para o servidor web
+Flask==3.0.3
+gunicorn==22.0.0
