@@ -1,0 +1,20 @@
+version: '3.8'
+
+# define os serviços/containers da aplicação
+services:
+  chatbot:
+    # buildar a imagem a partir do Dockerfile
+    build: .
+    # nome para a imagem construída
+    image: chatbot-juridico
+    # nome do container
+    container_name: chatbot_juridico_container
+    # carrega as variáveis de ambiente
+    env_file:
+      - .env
+    # mapeia as portas
+    ports:
+      - '5000:5000'
+    # mapeia os volumes
+    volumes:
+      - ./chroma_db:/app/chroma_db
