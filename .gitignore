@@ -212,3 +212,6 @@ chroma_db/
 
 ##arquivos temporarios de teste
 temp_yuri.txt
+
+# teste
+test_webhook.py
