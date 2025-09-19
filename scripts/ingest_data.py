@@ -10,7 +10,7 @@ from langchain_community.vectorstores import Chroma
 load_dotenv()
 
 DATA_PATH = 'dataset/'
-CHROMA_PATH = 'chroma_db' # aqui é onde o bd vetorial será salvo
+CHROMA_PATH = '/app/chroma_db' # aqui é onde o bd vetorial será salvo
 
 def inicializar_bedrock_client():
     # inicializa e retorna o cliente do Bedrock Runtime
