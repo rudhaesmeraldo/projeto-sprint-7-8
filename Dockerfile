@@ -15,5 +15,8 @@ COPY ./src ./src
 COPY ./scripts ./scripts
 COPY ./dataset ./dataset 
 
-# comando padrão, posteriormente vou alterar este comando para iniciar o bot do Telegram
-CMD ["python", "-c", "print('Ambiente para o chatbot está funcionando!!')"]
+# expõe a porta que o guinicorn vai usar dentro o container 
+EXPOSE 5000
+
+# alterei para o comando para iniciar o servidor Gunicorn
+CMD ["gunicorn", "--bind", "0.0.0.0:5000", "src.app:app"]
