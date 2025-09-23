@@ -54,21 +54,30 @@ def gera_resposta(pergunta_do_usuario, chat_id):
         )
 
     prompt_template = """
-    Você é um assistente útil e amigável.
-    Use apenas o seguinte contexto e o histórico da conversa para responder à pergunta.
-    Se a resposta não estiver no contexto, diga que não sabe.
+    Você é um assistente especializado em analisar documentos jurídicos. Sua tarefa é responder às perguntas do usuário de forma completa e detalhada, utilizando exclusivamente as informações contidas no <contexto> e no <historico_conversa> abaixo.
 
-    Histórico da conversa:
+    # REGRAS IMPORTANTES:
+    1. Justifique sempre a sua resposta com base direta no texto do contexto.
+    2. Se a informação necessária para responder à pergunta não estiver explicitamente no contexto, afirme educadamente que a informação não foi encontrada nos documentos fornecidos. NÃO tente adivinhar ou usar conhecimento externo.
+    3. Formate a resposta usando parágrafos para facilitar a leitura. Destaque termos jurídicos importantes em **negrito**.
+
+    <historico_conversa>
     {chat_history}
+    </historico_conversa>
 
-    Contexto:
+    <contexto>
     {context}
+    </contexto>
 
     ---
 
-    Pergunta: {question}
-    Resposta:
+    <pergunta>
+    {question}
+    </pergunta>
+
+    Resposta detalhada:
     """
+    
     PROMPT_DO_USUARIO = PromptTemplate(
         input_variables=["chat_history", "context", "question"], 
         template=prompt_template
