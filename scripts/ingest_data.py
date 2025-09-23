@@ -73,4 +73,4 @@ def processar_e_salvar_dados(bedrock_client): # carrega, processa os documentos 
 if __name__ == '__main__':
     cliente_bedrock = inicializar_bedrock_client()
     if cliente_bedrock:
-        carregar_e_dividir_documentos(cliente_bedrock)
+        processar_e_salvar_dados(cliente_bedrock)
