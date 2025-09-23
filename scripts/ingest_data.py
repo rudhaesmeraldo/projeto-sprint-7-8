@@ -25,22 +25,23 @@ def inicializar_bedrock_client():
     print('✅ Cliente Bedrock inicializado com sucesso.')
     return bedrock_client
 
-def carregar_e_dividir_documentos(bedrock_client):
-    # carrega, processa os documentos e salva no ChromaDB
+def processar_e_salvar_dados(bedrock_client): # carrega, processa os documentos e salva no chromaDB
     
     print(f'⏳ Carregando documentos da pasta: {DATA_PATH}')
 
     documentos = []
-    for nome_arquivo in os.listdir(DATA_PATH):
-        if nome_arquivo.endswith('.pdf'):
-            caminho_completo = os.path.join(DATA_PATH, nome_arquivo)
-            print(f'⏳ Processando o arquivo: {nome_arquivo}')
-            loader = PyPDFLoader(caminho_completo)
-            documentos.extend(loader.load())
+    # os.walk() para assim conseguir percorrer todas as pastas e subpastas
+    for root, dirs, files in os.walk(DATA_PATH):
+        for nome_arquivo in files:
+            if nome_arquivo.endswith('.pdf'):
+                caminho_completo = os.path.join(root, nome_arquivo)
+                print(f'⏳ Processando o arquivo: {caminho_completo}')
+                loader = PyPDFLoader(caminho_completo)
+                documentos.extend(loader.load())
 
     if not documentos:
         print('❌ Nenhum pdf encontrado na pasta "dataset"!')
-        return None, None
+        return
 
     print(f'✅ {len(documentos)} páginas de documentos carregadas com sucesso.')
 
