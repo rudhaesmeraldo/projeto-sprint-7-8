@@ -1,6 +1,6 @@
 from flask import Flask, request, jsonify
 import logging
-from src.chatbot import busca_por_similaridade, gera_resposta
+from src.chatbot import gera_resposta
 
 logging.basicConfig(level=logging.INFO)
 
@@ -17,15 +17,9 @@ def telegram_webhook():
         chat_id = update['message']['chat']['id']
         texto_do_usuario = update['message']['text']
         app.logger.info(f'Chat ID: {chat_id}, Mensagem: "{texto_do_usuario}"')
-
-        # pega o documento similar do ChromaDB
-        resultados_similares = busca_por_similaridade(texto_do_usuario)
-
-        # gera a resposta usando o Bedrock
-        resposta_bedrock = gera_resposta(resultados_similares, texto_do_usuario)
         
-        # extrai o conteúdo da resposta
-        reposta_do_bot = resposta_bedrock.content
+        # a função gera_resposta já cuida de tudo
+        reposta_do_bot = gera_resposta(texto_do_usuario, chat_id)
         app.logger.info(f'Resposta gerada: "{reposta_do_bot}"')
 
         # a resposta para o webhook do telegram é um json instruindo o que fazer, então preciso dizer para o telegram enviar a minha resposta de volta para o chat de onde a mensagem veio
