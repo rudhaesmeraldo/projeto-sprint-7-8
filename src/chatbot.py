@@ -32,7 +32,7 @@ db = Chroma(
 # carrega o llm que vai gerar as respostas
 llm = ChatBedrock(
     client=bedrock_client,
-    model_id='amazon.titan-text-express-v1'
+    model_id='amazon.titan-text-premier-v1:0'
 )
 print('✅ Componentes do chatbot prontos.')
 
