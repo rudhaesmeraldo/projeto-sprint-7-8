@@ -1,6 +1,10 @@
-# Chatbot Jurídico com AWS Bedrock e LangChain - Projeto 4
+# 📖 Chatbot Jurídico com AWS Bedrock e LangChain
 
-### Squad 6
+![Python](https://img.shields.io/badge/Python-3.10-blue) ![AWS EC2](https://img.shields.io/badge/AWS%20EC2-cloud-orange) ![AWS S3](https://img.shields.io/badge/AWS%20S3-storage-yellow) ![AWS Bedrock](https://img.shields.io/badge/AWS%20Bedrock-GenerativeAI-purple) ![LangChain](https://img.shields.io/badge/LangChain-framework-green) ![ChromaDB](https://img.shields.io/badge/ChromaDB-vectorDB-lightgrey) ![Telegram Bot](https://img.shields.io/badge/Telegram%20Bot-chat-blueviolet) ![Boto3](https://img.shields.io/badge/Boto3-AWS%20SDK-orange) ![PyPDF](https://img.shields.io/badge/PyPDF-PDF%20Processing-red)
+
+> Chatbot jurídico que responde perguntas usando documentos PDF, AWS Bedrock, LangChain e ChromaDB.
+
+---
 
 ## Sumário
 1. [Sobre o Projeto](#1-sobre-o-projeto)
@@ -141,7 +145,7 @@ Para interagir com o chatbot, acesse o link público do bot no Telegram.
 
 Este projeto foi desenvolvido pela **Squad 6** como parte do programa de bolsas da Compass UOL.
 
-- Rudhá Esmeraldo de Sousa
-- Yuri Kiev de Sousa Barreto
-- Agnes Ludmila de Araújo Teixeira
-- Rafaela Bezerra Rodrigues
+* [Agnes Ludmilla](https://github.com/agnesludmila)
+* [Rafaela Bezerra](https://github.com/Rafa01B)
+* [Rudhá Esmeraldo](https://github.com/rudhaesmeraldo)
+* [Yuri Kiev](https://github.com/YuriKievBarreto)
