@@ -1,6 +1,6 @@
-# Chatbot Jurídico com AWS Bedrock e LangChain - Projeto 4
+## ESBOÇO DO README -> Apagar depois
 
-### Squad 6
+# Chatbot Jurídico com AWS Bedrock e LangChain - Projeto 4
 
 ## Sumário
 1. [Sobre o Projeto](#1-sobre-o-projeto)
@@ -23,7 +23,7 @@ O chatbot é capaz de responder a perguntas em linguagem natural com base em uma
 
 ### 2. Arquitetura da Solução
 
-A solução foi implementada seguindo o requisito de ter todo o gerenciamento centralizado em uma instância **Amazon EC2**. A arquitetura de comunicação adotada foi a de **Polling**, onde a aplicação na EC2 é responsável por buscar ativamente novas mensagens na API do Telegram.
+A solução foi implementada utilizando um **API Gateway** como ponto de entrada (endpoint) para receber notificações de webhook do Telegram. Esse gateway repassa as requisições para uma aplicação servidora rodando em uma instância **Amazon EC2**, que centraliza toda a lógica de negócio.
 
 Os componentes principais são:
 
@@ -31,7 +31,8 @@ Os componentes principais são:
   - **Telegram:** Plataforma de mensagens utilizada para a interação do usuário com o chatbot.
 
 - **Computação e Lógica da Aplicação:**
-  - **Amazon EC2:** Instância `t2.micro` que hospeda a aplicação principal em Python. Ela gerencia todo o fluxo, desde a busca por novas mensagens até o processamento e a resposta.
+  - **Amazon API Gateway:** Atua como front-end da aplicação, recebendo as chamadas da API do Telegram de forma segura e gerenciável.
+  - **Amazon EC2:** Instância que hospeda a aplicação principal em Python (servidor Flask/Gunicorn). Ela gerencia todo o fluxo de processamento do RAG e a lógica de conversação.
   - **LangChain:** Framework utilizado para orquestrar toda a lógica do RAG, conectando a base de conhecimento, os modelos de IA e a memória da conversa.
 
 - **Base de Conhecimento (RAG):**
@@ -49,9 +50,10 @@ Os componentes principais são:
 ### 3. Tecnologias Utilizadas
 
 - **Linguagem:** Python 3.10
-- **Cloud:** AWS (EC2, S3, Bedrock, CloudWatch, IAM)
+- **Cloud:** AWS (EC2, S3, Bedrock, CloudWatch, API Gateway, IAM)
 - **Frameworks de IA:** LangChain, LangChain AWS
 - **Banco de Dados Vetorial:** ChromaDB
+- **Servidor Web:** Flask, Gunicorn
 - **Interface:** Python-Telegram-Bot
 - **Bibliotecas Principais:** Boto3, PyPDF, Python-dotenv
 
@@ -62,7 +64,7 @@ Os componentes principais são:
 Siga os passos abaixo para configurar e executar o projeto.
 
 #### Pré-requisitos
-- Conta na AWS com permissões para criar e gerenciar EC2, S3, IAM Roles e Bedrock.
+- Conta na AWS com permissões para criar e gerenciar EC2, S3, IAM Roles, API Gateway e Bedrock.
 - Python 3.10 ou superior instalado.
 - Um bot criado no Telegram para obter o Token de acesso.
 
@@ -72,17 +74,15 @@ Siga os passos abaixo para configurar e executar o projeto.
     - `AmazonS3ReadOnlyAccess`
     - `AmazonBedrockFullAccess`
     - `CloudWatchLogsFullAccess`
-3.  **Instância EC2:** Lance uma instância EC2 (ex: `t2.micro` com Ubuntu Server) e anexe a IAM Role criada no passo anterior.
+3.  **Instância EC2:** Lance uma instância EC2 (ex: `t2.micro` com Ubuntu Server), anexe a IAM Role criada e configure um Security Group para permitir tráfego de entrada na porta `5000`.
+4.  **API Gateway:** Crie um API Gateway com uma rota (ex: `/webhook`, método `POST`) e configure a integração para apontar para o IP público e a porta da sua instância EC2.
 
 #### b. Configuração do Projeto na EC2
-1.  Conecte-se à a instância EC2 via SSH.
-    ```bash
-    ssh -i "seu\caminho\para\as\keys\chatbot-keys.pem" ubuntu@54.221.3.162
-    ```
+1.  Conecte-se à sua instância EC2 via SSH.
 2.  Clone o repositório:
     ```bash
-    git clone https://github.com/Compass-pb-aws-2025-JUNHO/sprints-7-8-junho/tree/squad-6
-    cd sprints-7-8-junho
+    git clone [URL_DO_REPOSITORIO]
+    cd [NOME_DA_PASTA_DO_REPOSITORIO]
     ```
 3.  Crie e ative um ambiente virtual:
     ```bash
@@ -93,38 +93,35 @@ Siga os passos abaixo para configurar e executar o projeto.
     ```bash
     pip install -r requirements.txt
     ```
-5.  Crie e configure o arquivo de variáveis de ambiente. Você pode criar um arquivo `.env` com o seguinte conteúdo:
-    ```bash
-    nano .env
-    ```
-    Preencha com suas variáveis (deixe as credenciais da AWS em branco, pois a IAM Role cuidará disso):
+5.  Crie e configure o arquivo de variáveis de ambiente (`.env`):
     ```env
-    TELEGRAM_BOT_API_KEY=8171216067:AAG_qlbquxmHngCmpSNZEj8nxUQnFNJPNSI
-    S3_BUCKET_NAME=projeto-chatbot-squad6
+    TELEGRAM_BOT_API_KEY=[TOKEN_DO_TELEGRAM]
+    S3_BUCKET_NAME=[NOME_DO_BUCKET_S3]
     AWS_REGION_NAME=us-east-1
     ```
 
 #### c. Execução do Chatbot
-1.  **Ingestão de Dados:** Execute o script de ingestão para processar os documentos do S3 e criar a base de dados no ChromaDB. Este passo só precisa ser executado uma vez.
+1.  **Ingestão de Dados:** Execute o script de ingestão para processar os documentos do S3 e criar a base de dados no ChromaDB.
     ```bash
     python scripts/ingest_data.py
     ```
-2.  **Iniciar o Bot:** Após a conclusão da ingestão, inicie o bot. Para mantê-lo rodando em segundo plano, mesmo após fechar a sessão SSH, use `nohup`:
+2.  **Iniciar o Servidor:** Após a conclusão da ingestão, inicie o servidor Gunicorn para que a aplicação comece a receber requisições do API Gateway.
     ```bash
-    nohup python src/telegram_bot.py &
+    gunicorn --bind 0.0.0.0:5000 src.app:app
     ```
 
 ---
 
 ### 5. Acesso ao Chatbot
 
-Fale com o bot através do link: **[http://t.me/rag_judicial_bot](http://t.me/rag_judicial_bot)**
+Para interagir com o chatbot, acesse o link público do bot no Telegram.
+**Link:** `[URL_DO_SEU_BOT_NO_TELEGRAM]`
 
 ---
 
 ### 6. Dificuldades e Soluções
 
-- **Decisão Arquitetural (Webhook vs. Polling):** Inicialmente, foi explorada uma arquitetura de webhook com API Gateway por ser um padrão de mercado robusto. No entanto, para aderir estritamente ao requisito do projeto de gerenciamento total na EC2, optou-se pela implementação final com polling, que se mostrou mais simples e alinhada ao escopo.
+- **Decisão Arquitetural:** O projeto apresentava uma aparente contradição entre o diagrama de arquitetura (que incluía o API Gateway) e o texto (que sugeria gerenciamento 100% na EC2). A solução foi seguir o diagrama como guia principal, utilizando o API Gateway como endpoint e a EC2 como o host da lógica de negócio, interpretando "gerenciamento" como o processamento da aplicação e não o ponto de entrada da rede.
 
 - **Gerenciamento de Credenciais AWS:** A utilização de uma **IAM Role** anexada à instância EC2 foi uma solução de segurança e boas práticas fundamental, eliminando a necessidade de armazenar credenciais de acesso em arquivos de configuração e permitindo que a aplicação acesse os serviços da AWS de forma segura.
 
@@ -132,9 +129,9 @@ Fale com o bot através do link: **[http://t.me/rag_judicial_bot](http://t.me/ra
 
 ### 7. Autores
 
-Este projeto foi desenvolvido pela **Squad 6**:
+Este projeto foi desenvolvido pela **Squad 6** como parte do programa de bolsas da Compass UOL.
 
-- Rudhá Esmeraldo de Sousa
-- Yuri Kiev de Sousa Barreto
 - Agnes Ludmila de Araújo Teixeira
+- Yuri Kiev de Sousa Barreto
 - Rafaela Bezerra Rodrigues
+- Rudhá Esmeraldo de Sousa
