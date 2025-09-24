@@ -96,6 +96,8 @@ def processar_e_salvar_dados(bedrock_client):
         embedding=modelo_embedding,
         persist_directory=CHROMA_PATH
     )
+
+    db.persist() # garante que os arquivos do Chroma sejam gravados
     print(f'✅ {len(chunks)} chunks salvos com sucesso no ChromaDB.')
 
     # limpa a pasta temporária após a conclusão

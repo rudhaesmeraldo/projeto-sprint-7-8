@@ -1,6 +1,6 @@
-## ESBOÇO DO README -> Apagar depois
-
 # Chatbot Jurídico com AWS Bedrock e LangChain - Projeto 4
+
+### Squad 6
 
 ## Sumário
 1. [Sobre o Projeto](#1-sobre-o-projeto)
@@ -44,6 +44,16 @@ Os componentes principais são:
 
 - **Monitoramento:**
   - **Amazon CloudWatch:** Serviço utilizado para armazenar e visualizar os logs gerados pela aplicação, permitindo o monitoramento da atividade do chatbot.
+
+  ### Diagrama do Fluxo do Chatbot
+  
+<p align="center">
+  <img src="diagrama_flow.png" alt="Diagrama do Chatbot" width="600"/>
+</p>
+  
+  > Este diagrama representa o fluxo de dados entre o usuário, EC2, ChromaDB, Bedrock e CloudWatch.
+  
+  ---
 
 ---
 
@@ -131,7 +141,7 @@ Para interagir com o chatbot, acesse o link público do bot no Telegram.
 
 Este projeto foi desenvolvido pela **Squad 6** como parte do programa de bolsas da Compass UOL.
 
-- Agnes Ludmila de Araújo Teixeira
-- Yuri Kiev de Sousa Barreto
-- Rafaela Bezerra Rodrigues
 - Rudhá Esmeraldo de Sousa
+- Yuri Kiev de Sousa Barreto
+- Agnes Ludmila de Araújo Teixeira
+- Rafaela Bezerra Rodrigues
