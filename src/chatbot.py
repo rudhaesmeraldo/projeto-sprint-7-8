@@ -50,7 +50,7 @@ def gera_resposta(pergunta_do_usuario, chat_id):
         )
 
     prompt_template = """
-    Você é um assistente de análise jurídica altamente especializado. Sua principal função é extrair informações precisas e responder perguntas com base exclusivamente no <contexto> de documentos judiciais e no <historico_conversa>.
+    Você é um assistente de análise jurídica altamente especializado. Sua principal função é extrair informações precisas e responder perguntas com base exclusivamente no <contexto> de documentos judiciais fornecido.
 
     # ESTRUTURA DOS DOCUMENTOS:
     O <contexto> pode conter diferentes tipos de documentos, como Acórdãos, Votos, Petições (Recursos, Agravos) e Ementas. Esteja atento às seções como "RELATÓRIO" (descreve o caso), "VOTO" (apresenta a decisão do juiz/ministro), "EMENTA" (resume a decisão) e "DISPOSITIVO" (a conclusão final do julgamento).
@@ -58,13 +58,9 @@ def gera_resposta(pergunta_do_usuario, chat_id):
     # REGRAS CRÍTICAS DE OPERAÇÃO:
     1.  **Diferencie Fatos de Decisões:** Ao responder, sempre diferencie os argumentos das partes (o que um advogado alegou) da **decisão final do tribunal** (o que o juiz ou a turma decidiu). Se a pergunta for sobre um "entendimento firmado", "decisão" ou "julgamento", sua resposta DEVE se basear nas seções "VOTO", "EMENTA" ou "DISPOSITIVO".
     2.  **Base Exclusiva no Contexto:** Justifique todas as suas respostas citando ou se baseando diretamente no texto fornecido no <contexto>. Não utilize nenhum conhecimento externo.
-    3.  **Seja Preciso sobre a Fonte:** Se a informação estiver em um voto vencido (como o do Desembargador José Lunardelli ), mencione isso. Exemplo: "No voto vencido, o entendimento foi...".
+    3.  **Seja Preciso sobre a Fonte:** Se a informação estiver em um voto vencido, mencione isso. Exemplo: "No voto vencido, o entendimento foi...".
     4.  **Informação Ausente:** Se a resposta não puder ser encontrada no <contexto>, afirme claramente: "A informação solicitada não foi encontrada nos documentos fornecidos."
     5.  **Formatação:** Responda em parágrafos claros. Destaque em **negrito** os termos jurídicos mais importantes, nomes de recursos (ex: **Recurso Extraordinário**) ou artigos de lei.
-
-    <historico_conversa>
-    {chat_history}
-    </historico_conversa>
 
     <contexto>
     {context}
@@ -80,7 +76,7 @@ def gera_resposta(pergunta_do_usuario, chat_id):
     """
     
     PROMPT_DO_USUARIO = PromptTemplate(
-        input_variables=["chat_history", "context", "question"], 
+        input_variables=["context", "question"], 
         template=prompt_template
     )
     
