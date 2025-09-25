@@ -39,11 +39,6 @@ print('✅ Componentes do chatbot prontos.')
 # dicionário para armazenar as instâncias de memória por id do chat
 chat_memories = {}
 
-def busca_por_similaridade(pergunta_do_usuario):
-    resultados_similares = db.similarity_search(pergunta_do_usuario, k=5)
-    return resultados_similares
-
-
 def gera_resposta(pergunta_do_usuario, chat_id):
     # verifica se o id do chat não está em memorias, cria uma nova.
     if chat_id not in chat_memories:
