@@ -17,6 +17,10 @@ def telegram_webhook():
     app.logger.info('Recebido um update: %s', update)
 
     if 'message' in update and 'text' in update['message']:
+        # ignora mensagens de bots para evitar loops
+        if update['message']['from']['is_bot']:
+            return 'OK', 200
+
         chat_id = update['message']['chat']['id']
         texto_do_usuario = update['message']['text']
         app.logger.info(f'Chat ID: {chat_id}, Mensagem: "{texto_do_usuario}"')
