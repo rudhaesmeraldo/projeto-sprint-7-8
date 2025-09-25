@@ -4,7 +4,7 @@ from langchain_aws import BedrockEmbeddings
 from langchain_community.vectorstores import Chroma
 from langchain.prompts import PromptTemplate
 from langchain_aws import ChatBedrock
-from langchain.memory import ConversationBufferMemory
+from langchain.memory import ConversationBufferWindowMemory
 from langchain.chains import ConversationalRetrievalChain
 
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'scripts'))
@@ -42,21 +42,25 @@ chat_memories = {}
 def gera_resposta(pergunta_do_usuario, chat_id):
     # verifica se o id do chat não está em memorias, cria uma nova.
     if chat_id not in chat_memories:
-        chat_memories[chat_id] = ConversationBufferMemory(
+        chat_memories[chat_id] = ConversationBufferWindowMemory(
+            k=4,
             memory_key='chat_history',
             input_key='question',
             return_messages=True
         )
 
     prompt_template = """
+    Você é um assistente de análise jurídica altamente especializado. Sua principal função é extrair informações precisas e responder perguntas com base exclusivamente no <contexto> de documentos judiciais e no <historico_conversa>.
 
-    Você é um assistente especializado em analisar documentos jurídicos. Sua tarefa é responder às perguntas do usuário de forma completa e detalhada, utilizando exclusivamente as informações contidas no <contexto> e no <historico_conversa> abaixo.
+    # ESTRUTURA DOS DOCUMENTOS:
+    O <contexto> pode conter diferentes tipos de documentos, como Acórdãos, Votos, Petições (Recursos, Agravos) e Ementas. Esteja atento às seções como "RELATÓRIO" (descreve o caso), "VOTO" (apresenta a decisão do juiz/ministro), "EMENTA" (resume a decisão) e "DISPOSITIVO" (a conclusão final do julgamento).
 
-    # REGRAS IMPORTANTES:
-    1. Justifique sempre a sua resposta com base direta no texto do contexto.
-    2. Se a informação necessária para responder à pergunta não estiver explicitamente no contexto, afirme educadamente que a informação não foi encontrada nos documentos fornecidos. NÃO tente adivinhar ou usar conhecimento externo.
-    3. Formate a resposta usando parágrafos para facilitar a leitura. Destaque termos jurídicos importantes em **negrito**.
-    4. Mantenha a resposta concisa, mas completa, entre 200 e 500 caracteres, quando possível.
+    # REGRAS CRÍTICAS DE OPERAÇÃO:
+    1.  **Diferencie Fatos de Decisões:** Ao responder, sempre diferencie os argumentos das partes (o que um advogado alegou) da **decisão final do tribunal** (o que o juiz ou a turma decidiu). Se a pergunta for sobre um "entendimento firmado", "decisão" ou "julgamento", sua resposta DEVE se basear nas seções "VOTO", "EMENTA" ou "DISPOSITIVO".
+    2.  **Base Exclusiva no Contexto:** Justifique todas as suas respostas citando ou se baseando diretamente no texto fornecido no <contexto>. Não utilize nenhum conhecimento externo.
+    3.  **Seja Preciso sobre a Fonte:** Se a informação estiver em um voto vencido (como o do Desembargador José Lunardelli ), mencione isso. Exemplo: "No voto vencido, o entendimento foi...".
+    4.  **Informação Ausente:** Se a resposta não puder ser encontrada no <contexto>, afirme claramente: "A informação solicitada não foi encontrada nos documentos fornecidos."
+    5.  **Formatação:** Responda em parágrafos claros. Destaque em **negrito** os termos jurídicos mais importantes, nomes de recursos (ex: **Recurso Extraordinário**) ou artigos de lei.
 
     <historico_conversa>
     {chat_history}
@@ -72,7 +76,7 @@ def gera_resposta(pergunta_do_usuario, chat_id):
     {question}
     </pergunta>
 
-    Resposta detalhada:
+    Resposta Jurídica Detalhada:
     """
     
     PROMPT_DO_USUARIO = PromptTemplate(
