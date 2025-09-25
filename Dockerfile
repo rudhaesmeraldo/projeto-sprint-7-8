@@ -17,5 +17,4 @@ COPY ./scripts ./scripts
 # expõe a porta que o guinicorn vai usar dentro o container 
 EXPOSE 5000
 
-# alterei para o comando para iniciar o servidor Gunicorn
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "src.app:app"]
+CMD ["gunicorn", "--workers", "1", "--bind", "0.0.0.0:5000", "src.app:app"]
