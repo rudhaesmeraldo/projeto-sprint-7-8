@@ -27,7 +27,7 @@ async def responder(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     logging.info(f'Resposta gerada: "{resposta_do_bot}"') # log para ver a resposta gerada
 
     # Simplesmente responde o que o usuário disse
-    await update.message.reply_text(reposta_do_bot)
+    await update.message.reply_text(resposta_do_bot)
 
 def main() -> None:
     """Inicia o bot."""

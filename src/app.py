@@ -1,6 +1,6 @@
 from flask import Flask, request, jsonify
 import logging
-from src.chatbot import gera_resposta
+from chatbot import gera_resposta
 import os, requests
 
 logging.basicConfig(level=logging.INFO)
@@ -26,13 +26,13 @@ def telegram_webhook():
         app.logger.info(f'Chat ID: {chat_id}, Mensagem: "{texto_do_usuario}"')
         
         # a função gera_resposta já cuida de tudo
-        reposta_do_bot = gera_resposta(texto_do_usuario, chat_id)
-        app.logger.info(f'Resposta gerada: "{reposta_do_bot}"')
+        resposta_do_bot = gera_resposta(texto_do_usuario, chat_id)
+        app.logger.info(f'Resposta gerada: "{resposta_do_bot}"')
 
         # monta o payload para a API do Telegram
         payload = {
             'chat_id': chat_id,
-            'text': reposta_do_bot
+            'text': resposta_do_bot
         }
 
         # envia a mensagem fazendo uma nova requisição
@@ -45,7 +45,7 @@ def telegram_webhook():
         # response_data = {
         #     'method': 'sendMessage',
         #     'chat_id': chat_id,
-        #     'text': reposta_do_bot
+        #     'text': resposta_do_bot
         # }
         
         # return jsonify(response_data)
