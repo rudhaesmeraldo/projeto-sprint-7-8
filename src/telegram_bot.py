@@ -4,7 +4,7 @@ from telegram.ext import Application, MessageHandler, ContextTypes, filters
 import os
 from dotenv import load_dotenv
 
-from chatbot import busca_por_similaridade, gera_resposta
+from chatbot import gera_resposta
 
 load_dotenv()
 # Configura o log para ver o que está acontecendo
