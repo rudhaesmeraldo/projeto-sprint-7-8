@@ -1,5 +1,6 @@
 import sys
 import os
+import re
 from langchain_community.vectorstores import Chroma
 from langchain.prompts import PromptTemplate
 from langchain_aws import ChatBedrock, BedrockEmbeddings
@@ -31,12 +32,12 @@ db = Chroma(
 # carrega o llm que vai gerar as respostas
 llm = ChatBedrock(
     client=bedrock_client,
-    model_id='amazon.titan-text-express-v1'
+    model_id="mistral.mistral-large-2402-v1:0"
 )
 print('✅ Componentes do chatbot prontos.')
 
 # lista de saudações para identificar interações
-SAUDACOES  = ['olá', 'oi', 'bom dia', 'boa tarde', 'boa noite', 'saudações', 'e aí', 'fala', 'Opa', 'tudo bem', 'como vai', 'tudo certo', 'tudo em paz', 'salve']
+SAUDACOES_KEYWORDS = ['olá', 'oi', 'bom dia', 'boa tarde', 'boa noite', 'saudações', 'e aí', 'fala', 'Opa', 'tudo bem', 'como vai', 'tudo certo', 'tudo em paz', 'salve']
 
 # dicionário para armazenar as instâncias de memória por id do chat
 chat_memories = {}
@@ -44,10 +45,16 @@ chat_memories = {}
 def gera_resposta(pergunta_do_usuario, chat_id):
     # trata a mensagem do usuário para facilitar
     input_minusculo = pergunta_do_usuario.lower()
+    
+    # Remove pontuações para isolar as palavras
+    input_limpo = re.sub(r'[^\w\s]', '', input_minusculo)
+    palavras = input_limpo.split()
 
-    # aqui eu estou criando um 'roteador', vou identificar se a mensagem é uma saudação
-    if any(saudacao in input_minusculo for saudacao in SAUDACOES):
-        return 'Olá! Sou seu assistente jurídico. Manda a boa de hoje?'
+    # Considera uma saudação se a mensagem for curta e se contiver alguma das palavras chave
+    is_greeting = len(palavras) <= 4 and any(p in SAUDACOES_KEYWORDS for p in palavras)
+
+    if is_greeting:
+        return "Olá! Sou seu assistente jurídico. Manda a boa de hoje?"
 
     # verifica se o id do chat não está em memorias, cria uma nova.
     if chat_id not in chat_memories:
@@ -63,7 +70,7 @@ def gera_resposta(pergunta_do_usuario, chat_id):
 
     # ESTRUTURA DOS DOCUMENTOS:
     O <contexto> pode conter diferentes tipos de documentos, como Acórdãos, Votos, Petições (Recursos, Agravos) e Ementas. Esteja atento às seções como "RELATÓRIO" (descreve o caso), "VOTO" (apresenta a decisão do juiz/ministro), "EMENTA" (resume a decisão) e "DISPOSITIVO" (a conclusão final do julgamento).
-
+    
     # REGRAS CRÍTICAS DE OPERAÇÃO:
     1.  **Diferencie Fatos de Decisões:** Ao responder, sempre diferencie os argumentos das partes (o que um advogado alegou) da **decisão final do tribunal** (o que o juiz ou a turma decidiu). Se a pergunta for sobre um "entendimento firmado", "decisão" ou "julgamento", sua resposta DEVE se basear nas seções "VOTO", "EMENTA" ou "DISPOSITIVO".
     2.  **Base Exclusiva no Contexto:** Justifique todas as suas respostas citando ou se baseando diretamente no texto fornecido no <contexto>. Não utilize nenhum conhecimento externo.
@@ -103,4 +110,3 @@ def gera_resposta(pergunta_do_usuario, chat_id):
     resposta = cadeia_conversa.invoke({"question": pergunta_do_usuario})
     
     return resposta['answer']
-
