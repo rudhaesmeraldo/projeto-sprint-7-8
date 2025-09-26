@@ -75,7 +75,7 @@ def processar_e_salvar_dados(bedrock_client):
 
     # dividir os documentos em pedaços
     print('⏳ Dividindo documentos em chunks...')
-    text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=100)
+    text_splitter = RecursiveCharacterTextSplitter(chunk_size=800, chunk_overlap=200)
     chunks = text_splitter.split_documents(documentos)
     
     print(f'✅ Total de {len(chunks)} chunks criados!')

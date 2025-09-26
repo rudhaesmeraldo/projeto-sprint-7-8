@@ -70,7 +70,7 @@ def gera_resposta(pergunta_do_usuario, chat_id):
 
     # ESTRUTURA DOS DOCUMENTOS:
     O <contexto> pode conter diferentes tipos de documentos, como Acórdãos, Votos, Petições (Recursos, Agravos) e Ementas. Esteja atento às seções como "RELATÓRIO" (descreve o caso), "VOTO" (apresenta a decisão do juiz/ministro), "EMENTA" (resume a decisão) e "DISPOSITIVO" (a conclusão final do julgamento).
-    
+
     # REGRAS CRÍTICAS DE OPERAÇÃO:
     1.  **Diferencie Fatos de Decisões:** Ao responder, sempre diferencie os argumentos das partes (o que um advogado alegou) da **decisão final do tribunal** (o que o juiz ou a turma decidiu). Se a pergunta for sobre um "entendimento firmado", "decisão" ou "julgamento", sua resposta DEVE se basear nas seções "VOTO", "EMENTA" ou "DISPOSITIVO".
     2.  **Base Exclusiva no Contexto:** Justifique todas as suas respostas citando ou se baseando diretamente no texto fornecido no <contexto>. Não utilize nenhum conhecimento externo.
@@ -97,7 +97,7 @@ def gera_resposta(pergunta_do_usuario, chat_id):
     )
     
     # cria o retriever com o novo valor de 'k' para buscar mais documentos
-    retriever = db.as_retriever(search_kwargs={"k": 5})
+    retriever = db.as_retriever(search_kwargs={"k": 8})
     
     # cria a cadeia de conversa com o retriever
     cadeia_conversa = ConversationalRetrievalChain.from_llm(
