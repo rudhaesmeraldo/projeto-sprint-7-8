@@ -1,6 +1,6 @@
 from flask import Flask, request, jsonify
 import logging
-from chatbot import gera_resposta
+from .chatbot import gera_resposta
 import os, requests
 
 logging.basicConfig(level=logging.INFO)
