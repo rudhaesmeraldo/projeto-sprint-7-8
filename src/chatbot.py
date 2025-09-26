@@ -1,9 +1,8 @@
 import sys
 import os
-from langchain_aws import BedrockEmbeddings
 from langchain_community.vectorstores import Chroma
 from langchain.prompts import PromptTemplate
-from langchain_aws import ChatBedrock
+from langchain_aws import ChatBedrock, BedrockEmbeddings
 from langchain.memory import ConversationBufferWindowMemory
 from langchain.chains import ConversationalRetrievalChain
 
@@ -36,10 +35,20 @@ llm = ChatBedrock(
 )
 print('✅ Componentes do chatbot prontos.')
 
+# lista de saudações para identificar interações
+SAUDACOES  = ['olá', 'oi', 'bom dia', 'boa tarde', 'boa noite', 'saudações', 'e aí', 'fala', 'Opa', 'tudo bem', 'como vai', 'tudo certo', 'tudo em paz', 'salve']
+
 # dicionário para armazenar as instâncias de memória por id do chat
 chat_memories = {}
 
 def gera_resposta(pergunta_do_usuario, chat_id):
+    # trata a mensagem do usuário para facilitar
+    input_minusculo = pergunta_do_usuario.lower()
+
+    # aqui eu estou criando um 'roteador', vou identificar se a mensagem é uma saudação
+    if any(saudacao in input_minusculo for saudacao in SAUDACOES):
+        return 'Olá! Sou seu assistente jurídico. Manda a boa de hoje?'
+
     # verifica se o id do chat não está em memorias, cria uma nova.
     if chat_id not in chat_memories:
         chat_memories[chat_id] = ConversationBufferWindowMemory(
