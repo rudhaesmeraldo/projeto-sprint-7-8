@@ -103,9 +103,22 @@ def gera_resposta(pergunta_do_usuario, chat_id):
         llm=llm,
         retriever=retriever,
         memory=chat_memories[chat_id],
-        combine_docs_chain_kwargs={'prompt': PROMPT_DO_USUARIO}
+        combine_docs_chain_kwargs={'prompt': PROMPT_DO_USUARIO},
+        return_source_documents=True
         )
 
     resposta = cadeia_conversa.invoke({'question': pergunta_do_usuario})
-    
+
+    print('\n 📃 DOCUMENTOS RECUPERADOS COMO CONTEXTO')
+    if 'source_documents' in resposta and resposta['source_documents']:
+        for doc in resposta['source_documents']:
+            # pega o nome do arquivo da metadata
+            source_file = doc.metadata.get('source', 'N/A').split('/')[-1]
+            print(f'FONTE: {source_file}')
+            # Imprime os primeiros 300 caracteres do conteúdo para ser breve
+            print(f'CONTEÚDO: {doc.page_content[:300]}...\n')
+    else:
+        print('Nenhum documento foi retornado')
+    print('FIM DO DEBUG\n')
+
     return resposta['answer']
