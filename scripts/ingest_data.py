@@ -6,6 +6,7 @@ from langchain_community.document_loaders import PyPDFLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_aws import BedrockEmbeddings
 from langchain_community.vectorstores import Chroma
+from src.aws_utils import inicializar_bedrock_client
 
 # carrega as variáveis de ambiente do arquivo .env
 load_dotenv()
@@ -39,17 +40,6 @@ def baixar_arquivos_do_s3(bucket, pasta_local):
     except Exception as e:
         print(f'❌ Erro ao baixar arquivos do S3: {e}')
         return False
-
-def inicializar_bedrock_client():
-    # inicializa e retorna o cliente do Bedrock Runtime
-    print('⏳ Inicializando cliente Bedrock...')
-    region_name = os.getenv('AWS_REGION_NAME')
-    bedrock_client = boto3.client(
-        service_name='bedrock-runtime',
-        region_name=region_name,
-    )
-    print('✅ Cliente Bedrock inicializado com sucesso.')
-    return bedrock_client
 
 def processar_e_salvar_dados(bedrock_client):
     # primeiro, baixa os arquivos do s3
@@ -101,7 +91,7 @@ def processar_e_salvar_dados(bedrock_client):
     print(f'✅ {len(chunks)} chunks salvos com sucesso no ChromaDB.')
 
     # limpa a pasta temporária após a conclusão
-    print(f'🧹 A limpar a pasta temporária: {LOCAL_DATA_PATH}')
+    print(f'🧹 Limpando a pasta temporária: {LOCAL_DATA_PATH}')
     shutil.rmtree(LOCAL_DATA_PATH)
     print('✅ Limpeza concluída.')
 

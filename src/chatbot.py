@@ -6,10 +6,7 @@ from langchain.prompts import PromptTemplate
 from langchain_aws import ChatBedrock, BedrockEmbeddings
 from langchain.memory import ConversationBufferWindowMemory
 from langchain.chains import ConversationalRetrievalChain
-
-sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'scripts'))
-
-from ingest_data import inicializar_bedrock_client
+from .aws_utils import inicializar_bedrock_client
 
 CHROMA_PATH = '/app/chroma_db'
 
@@ -32,7 +29,7 @@ db = Chroma(
 # carrega o llm que vai gerar as respostas
 llm = ChatBedrock(
     client=bedrock_client,
-    model_id="mistral.mistral-large-2402-v1:0"
+    model_id='mistral.mistral-large-2402-v1:0'
 )
 print('✅ Componentes do chatbot prontos.')
 
@@ -54,7 +51,7 @@ def gera_resposta(pergunta_do_usuario, chat_id):
     is_greeting = len(palavras) <= 4 and any(p in SAUDACOES_KEYWORDS for p in palavras)
 
     if is_greeting:
-        return "Olá! Sou seu assistente jurídico. Manda a boa de hoje?"
+        return 'Olá! Sou seu assistente jurídico. Manda a boa de hoje?'
 
     # verifica se o id do chat não está em memorias, cria uma nova.
     if chat_id not in chat_memories:
@@ -94,21 +91,21 @@ def gera_resposta(pergunta_do_usuario, chat_id):
     """
     
     PROMPT_DO_USUARIO = PromptTemplate(
-        input_variables=["context", "question"], 
+        input_variables=['context', 'question'], 
         template=prompt_template
     )
     
     # cria o retriever com o novo valor de 'k' para buscar mais documentos
-    retriever = db.as_retriever(search_kwargs={"k": 8})
+    retriever = db.as_retriever(search_kwargs={'k': 8})
     
     # cria a cadeia de conversa com o retriever
     cadeia_conversa = ConversationalRetrievalChain.from_llm(
         llm=llm,
         retriever=retriever,
         memory=chat_memories[chat_id],
-        combine_docs_chain_kwargs={"prompt": PROMPT_DO_USUARIO}
-    )
+        combine_docs_chain_kwargs={'prompt': PROMPT_DO_USUARIO}
+        )
 
-    resposta = cadeia_conversa.invoke({"question": pergunta_do_usuario})
+    resposta = cadeia_conversa.invoke({'question': pergunta_do_usuario})
     
     return resposta['answer']
