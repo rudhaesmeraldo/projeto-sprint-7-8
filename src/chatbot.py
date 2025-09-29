@@ -20,7 +20,7 @@ bedrock_client = inicializar_bedrock_client()
 # carrega o modelo de embeddings
 modelo_embedding = BedrockEmbeddings(
     client=bedrock_client,
-    model_id='amazon.titan-embed-text-v2:0'
+    model_id='amazon.titan-embed-multimodal-v1'
 )
 
 # carrega o vector store já persistido pelo script de ingestão

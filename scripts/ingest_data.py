@@ -69,7 +69,7 @@ def processar_e_salvar_dados(bedrock_client):
     child_splitter = RecursiveCharacterTextSplitter(chunk_size=400, chunk_overlap=100)
     
     # modelo de embedding
-    modelo_embedding = BedrockEmbeddings(client=bedrock_client, model_id='amazon.titan-embed-text-v2:0')
+    modelo_embedding = BedrockEmbeddings(client=bedrock_client, model_id='amazon.titan-embed-multimodal-v1')
 
     # vector store que irá armazenar os embeddings dos 'filhos'
     vectorstore = Chroma(
