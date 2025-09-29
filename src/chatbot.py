@@ -59,6 +59,7 @@ def gera_resposta(pergunta_do_usuario, chat_id):
             k=4,
             memory_key='chat_history',
             input_key='question',
+            output_key='answer',
             return_messages=True
         )
 
