@@ -1,6 +1,7 @@
 import os
 import boto3
 import shutil
+import time # Adicionado para a pausa entre os lotes
 from dotenv import load_dotenv
 from langchain_community.document_loaders import PyPDFLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
@@ -88,8 +89,17 @@ def processar_e_salvar_dados(bedrock_client):
         parent_splitter=parent_splitter,
     )
 
-    print(f'⏳ Adicionando documentos e gerando embeddings (isso pode levar um tempo)...')
-    retriever.add_documents(documentos)
+    tamanho_lote = 16 
+    total_documentos = len(documentos)
+
+    print(f'⏳ Adicionando documentos em lotes de {tamanho_lote}...')
+    
+    for i in range(0, total_documentos, tamanho_lote):
+        lote = documentos[i : i + tamanho_lote]
+        print(f'  -> Processando lote {i//tamanho_lote + 1}/{(total_documentos + tamanho_lote - 1)//tamanho_lote} (documentos {i+1} a {min(i+tamanho_lote, total_documentos)})...')
+        retriever.add_documents(lote)
+        print(f'     ...pausando por 1 segundo...')
+        time.sleep(1) # Pausa de 1 segundo para evitar throttling
 
     print(f'✅ Base de dados vetorial criada com sucesso em: {CHROMA_PATH}')
     
