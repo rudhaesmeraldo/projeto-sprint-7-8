@@ -73,7 +73,7 @@ def processar_e_salvar_dados(bedrock_client):
 
     # vector store que irá armazenar os embeddings dos 'filhos'
     vectorstore = Chroma(
-        collection_name="split_parents", 
+        collection_name='split_parents', 
         embedding_function=modelo_embedding,
         persist_directory=CHROMA_PATH
     )
@@ -96,10 +96,10 @@ def processar_e_salvar_dados(bedrock_client):
     
     for i in range(0, total_documentos, tamanho_lote):
         lote = documentos[i : i + tamanho_lote]
-        print(f'  -> Processando lote {i//tamanho_lote + 1}/{(total_documentos + tamanho_lote - 1)//tamanho_lote} (documentos {i+1} a {min(i+tamanho_lote, total_documentos)})...')
+        print(f'⏳ Processando lote {i//tamanho_lote + 1}/{(total_documentos + tamanho_lote - 1)//tamanho_lote} (documentos {i+1} a {min(i+tamanho_lote, total_documentos)})')
         retriever.add_documents(lote)
-        print(f'     ...pausando por 1 segundo...')
-        time.sleep(1) # Pausa de 1 segundo para evitar throttling
+        print(f'⏳ pausando por 1 segundo')
+        time.sleep(1) # pausa de 1 segundo para evitar throttling
 
     print(f'✅ Base de dados vetorial criada com sucesso em: {CHROMA_PATH}')
     

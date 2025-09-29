@@ -88,6 +88,8 @@ def gera_resposta(pergunta_do_usuario, chat_id):
     5.  Formulação da Resposta: Com base nos fundamentos (passo 4), construa a resposta de forma a responder diretamente à pergunta do usuário.
 
     # REGRAS CRÍTICAS PARA A RESPOSTA:
+    - IDIOMA: Responda sempre e exclusivamente em Português do Brasil.
+    - Tom Formal e Profissional: Use uma linguagem formal, profissional e técnica, adequada para o contexto jurídico.
     - Seja Conciso e Direto: Responda a pergunta de forma objetiva, focando apenas nas informações essenciais. Evite detalhes desnecessários.
     - Base Exclusiva no Contexto: Se a informação não estiver no <contexto>, afirme claramente: "A informação sobre [ponto específico] não foi encontrada nos documentos fornecidos."
     - Diferencie Fatos de Decisões: Deixe sempre claro o que é um argumento de uma parte e o que é a decisão final do tribunal.
