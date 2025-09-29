@@ -1,35 +1,49 @@
-import sys
 import os
 import re
+import boto3
 from langchain_community.vectorstores import Chroma
 from langchain.prompts import PromptTemplate
 from langchain_aws import ChatBedrock, BedrockEmbeddings
 from langchain.memory import ConversationBufferWindowMemory
 from langchain.chains import ConversationalRetrievalChain
+from langchain.storage import InMemoryStore
+from langchain.retrievers import ParentDocumentRetriever
+from langchain.text_splitter import RecursiveCharacterTextSplitter
 from .aws_utils import inicializar_bedrock_client
 
 CHROMA_PATH = '/app/chroma_db'
 
+print('⏳ Carregando componentes do chatbot...')
+
 bedrock_client = inicializar_bedrock_client()
 
-print('⏳ Carregando modelos e banco de dados na memória...')
-
-# carrega o modelo de embeddings que traduz texto para vetores
+# carrega o modelo de embeddings
 modelo_embedding = BedrockEmbeddings(
     client=bedrock_client,
     model_id='amazon.titan-embed-text-v1'
 )
 
-#carrega a base de dados vetorial que já foi criada pelo script ingest
-db = Chroma(
-    persist_directory=CHROMA_PATH,
-    embedding_function=modelo_embedding
+# carrega o vector store já persistido pelo script de ingestão
+vectorstore = Chroma(
+    collection_name="split_parents",
+    embedding_function=modelo_embedding,
+    persist_directory=CHROMA_PATH
+)
+
+# recria a estrutura do parent document retriever para poder fazer as buscas. o docstore pode ser recriado vazio, pois a informação principal está no vectorstore
+store = InMemoryStore()
+child_splitter = RecursiveCharacterTextSplitter(chunk_size=400, chunk_overlap=100)
+
+retriever = ParentDocumentRetriever(
+    vectorstore=vectorstore,
+    docstore=store,
+    child_splitter=child_splitter,
 )
 
 # carrega o llm que vai gerar as respostas
 llm = ChatBedrock(
     client=bedrock_client,
-    model_id='mistral.mistral-large-2402-v1:0'
+    model_id="mistral.mistral-large-2402-v1:0"
 )
 print('✅ Componentes do chatbot prontos.')
 
@@ -96,17 +110,13 @@ def gera_resposta(pergunta_do_usuario, chat_id):
         template=prompt_template
     )
     
-    # cria o retriever com o novo valor de 'k' para buscar mais documentos
-    retriever = db.as_retriever(search_kwargs={'k': 8})
-    
-    # cria a cadeia de conversa com o retriever
+    # cria a cadeia de conversa com o novo retriever
     cadeia_conversa = ConversationalRetrievalChain.from_llm(
         llm=llm,
         retriever=retriever,
         memory=chat_memories[chat_id],
-        combine_docs_chain_kwargs={'prompt': PROMPT_DO_USUARIO},
-        return_source_documents=True
-        )
+        combine_docs_chain_kwargs={'prompt': PROMPT_DO_USUARIO}
+    )
 
     resposta = cadeia_conversa.invoke({'question': pergunta_do_usuario})
 
@@ -121,5 +131,5 @@ def gera_resposta(pergunta_do_usuario, chat_id):
     else:
         print('Nenhum documento foi retornado')
     print('FIM DO DEBUG\n')
-
+    
     return resposta['answer']

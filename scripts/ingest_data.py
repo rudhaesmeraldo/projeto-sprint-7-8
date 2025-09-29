@@ -6,13 +6,15 @@ from langchain_community.document_loaders import PyPDFLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_aws import BedrockEmbeddings
 from langchain_community.vectorstores import Chroma
+from langchain.storage import InMemoryStore
+from langchain.retrievers import ParentDocumentRetriever
 from src.aws_utils import inicializar_bedrock_client
 
 # carrega as variáveis de ambiente do arquivo .env
 load_dotenv()
 S3_BUCKET_NAME = os.getenv('S3_BUCKET_NAME')
 LOCAL_DATA_PATH = 'temp_dataset' # pasta temporária para onde os arquivo do s3 serão baixados
-CHROMA_PATH = '/app/chroma_db'
+CHROMA_PATH = 'chroma_db'
 
 def baixar_arquivos_do_s3(bucket, pasta_local):
     # baixa todos os arquivos do bucket s3 para uma pasta temporária
@@ -30,9 +32,8 @@ def baixar_arquivos_do_s3(bucket, pasta_local):
         for page in pages:
             for obj in page.get('Contents', []):
                 key = obj['Key']
-                caminho_destino = os.path.join(pasta_local, key)
-                if not os.path.exists(os.path.dirname(caminho_destino)):
-                    os.makedirs(os.path.dirname(caminho_destino))
+                # garante que o nome do arquivo seja usado como base no destino
+                caminho_destino = os.path.join(pasta_local, os.path.basename(key))
                 if not key.endswith('/'):
                     s3_client.download_file(bucket, key, caminho_destino)
         print('✅ Arquivos baixados com sucesso.')
@@ -48,14 +49,11 @@ def processar_e_salvar_dados(bedrock_client):
 
     print(f'⏳ Carregando documentos da pasta: {LOCAL_DATA_PATH}')
     documentos = []
-    # os.walk() para assim conseguir percorrer todas as pastas e subpastas
-    for root, dirs, files in os.walk(LOCAL_DATA_PATH):
-        for nome_arquivo in files:
-            if nome_arquivo.endswith('.pdf'):
-                caminho_completo = os.path.join(root, nome_arquivo)
-                print(f'⏳ Processando o arquivo: {caminho_completo}')
-                loader = PyPDFLoader(caminho_completo)
-                documentos.extend(loader.load())
+    for nome_arquivo in os.listdir(LOCAL_DATA_PATH):
+        if nome_arquivo.endswith('.pdf'):
+            caminho_completo = os.path.join(LOCAL_DATA_PATH, nome_arquivo)
+            loader = PyPDFLoader(caminho_completo)
+            documentos.extend(loader.load())
 
     if not documentos:
         print('❌ Nenhum pdf encontrado no bucket s3!')
@@ -63,33 +61,38 @@ def processar_e_salvar_dados(bedrock_client):
 
     print(f'✅ {len(documentos)} páginas de documentos carregadas com sucesso.')
 
-    # dividir os documentos em pedaços
-    print('⏳ Dividindo documentos em chunks...')
-    text_splitter = RecursiveCharacterTextSplitter(chunk_size=800, chunk_overlap=200)
-    chunks = text_splitter.split_documents(documentos)
+    # splitter para os documentos 'pai'
+    parent_splitter = RecursiveCharacterTextSplitter(chunk_size=2000, chunk_overlap=200)
+
+    # splitter para os 'filhos', que serão usados para a busca de similaridade
+    child_splitter = RecursiveCharacterTextSplitter(chunk_size=400, chunk_overlap=100)
     
-    print(f'✅ Total de {len(chunks)} chunks criados!')
+    # modelo de embedding
+    modelo_embedding = BedrockEmbeddings(client=bedrock_client, model_id='amazon.titan-embed-text-v1')
 
-    # gerar os embeddings com o Amazon Bedrock
-    print('⏳ Gerando embeddings com o Amazon Bedrock...')
-    modelo_embedding = BedrockEmbeddings(
-        client=bedrock_client,
-        model_id='amazon.titan-embed-text-v1'
-    )
-    print('✅ Modelo de embedding criado com sucesso.')
-
-    # salva os chunks e embeddings no ChromaDB
-    print(f'⏳ Salvando chunks e embeddings no ChromaDB em: {CHROMA_PATH}...')
-    # A função from_documents já calcula os embeddings para cada chunk e os salva
-    db = Chroma.from_documents(
-        documents=chunks,
-        embedding=modelo_embedding,
+    # vector store que irá armazenar os embeddings dos 'filhos'
+    vectorstore = Chroma(
+        collection_name="split_parents", 
+        embedding_function=modelo_embedding,
         persist_directory=CHROMA_PATH
     )
 
-    db.persist() # garante que os arquivos do Chroma sejam gravados
-    print(f'✅ {len(chunks)} chunks salvos com sucesso no ChromaDB.')
+    # armazenador em memória para os documentos 'pai'
+    store = InMemoryStore()
 
+    print('⏳ Configurando o ParentDocumentRetriever...')
+    retriever = ParentDocumentRetriever(
+        vectorstore=vectorstore,
+        docstore=store,
+        child_splitter=child_splitter,
+        parent_splitter=parent_splitter,
+    )
+
+    print(f'⏳ Adicionando documentos e gerando embeddings (isso pode levar um tempo)...')
+    retriever.add_documents(documentos)
+
+    print(f'✅ Base de dados vetorial criada com sucesso em: {CHROMA_PATH}')
+    
     # limpa a pasta temporária após a conclusão
     print(f'🧹 Limpando a pasta temporária: {LOCAL_DATA_PATH}')
     shutil.rmtree(LOCAL_DATA_PATH)
@@ -98,4 +101,8 @@ def processar_e_salvar_dados(bedrock_client):
 if __name__ == '__main__':
     cliente_bedrock = inicializar_bedrock_client()
     if cliente_bedrock:
+        # apaga a base antiga antes de criar a nova
+        if os.path.exists(CHROMA_PATH):
+            print(f'🧹 Apagando base de dados antiga em {CHROMA_PATH}...')
+            shutil.rmtree(CHROMA_PATH)
         processar_e_salvar_dados(cliente_bedrock)
