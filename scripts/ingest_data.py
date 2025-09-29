@@ -101,8 +101,4 @@ def processar_e_salvar_dados(bedrock_client):
 if __name__ == '__main__':
     cliente_bedrock = inicializar_bedrock_client()
     if cliente_bedrock:
-        # apaga a base antiga antes de criar a nova
-        if os.path.exists(CHROMA_PATH):
-            print(f'🧹 Apagando base de dados antiga em {CHROMA_PATH}...')
-            shutil.rmtree(CHROMA_PATH)
         processar_e_salvar_dados(cliente_bedrock)
