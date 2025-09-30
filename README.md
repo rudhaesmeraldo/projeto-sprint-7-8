@@ -1,8 +1,8 @@
 # 📖 Chatbot Jurídico com AWS Bedrock e LangChain
 
-![Python](https://img.shields.io/badge/Python-3.10-blue) ![AWS EC2](https://img.shields.io/badge/AWS%20EC2-cloud-orange) ![AWS S3](https://img.shields.io/badge/AWS%20S3-storage-yellow) ![AWS Bedrock](https://img.shields.io/badge/AWS%20Bedrock-GenerativeAI-purple) ![LangChain](https://img.shields.io/badge/LangChain-framework-green) ![ChromaDB](https://img.shields.io/badge/ChromaDB-vectorDB-lightgrey) ![Telegram Bot](https://img.shields.io/badge/Telegram%20Bot-chat-blueviolet) ![Boto3](https://img.shields.io/badge/Boto3-AWS%20SDK-orange) ![PyPDF](https://img.shields.io/badge/PyPDF-PDF%20Processing-red)
+![Python](https://img.shields.io/badge/Python-3.10-blue) ![Docker](https://img.shields.io/badge/Docker-containerization-blue) ![AWS EC2](https://img.shields.io/badge/AWS%20EC2-cloud-orange) ![AWS S3](https://img.shields.io/badge/AWS%20S3-storage-yellow) ![AWS Bedrock](https://img.shields.io/badge/AWS%20Bedrock-GenerativeAI-purple) ![LangChain](https://img.shields.io/badge/LangChain-framework-green) ![ChromaDB](https://img.shields.io/badge/ChromaDB-vectorDB-lightgrey) ![Telegram Bot](https://img.shields.io/badge/Telegram%20Bot-chat-blueviolet)
 
-> Chatbot jurídico que responde perguntas usando documentos PDF, AWS Bedrock, LangChain e ChromaDB.
+> Chatbot jurídico que responde perguntas usando documentos PDF, AWS Bedrock, LangChain e ChromaDB, com uma interface no Telegram e deploy containerizado.
 
 ---
 
@@ -12,7 +12,7 @@
 3. [Tecnologias Utilizadas](#3-tecnologias-utilizadas)
 4. [Como Executar o Sistema](#4-como-executar-o-sistema)
 5. [Acesso ao Chatbot](#5-acesso-ao-chatbot)
-6. [Dificuldades e Soluções](#6-dificuldades-e-soluções)
+6. [Desafios, Análise de Resultados e Limitações](#6-desafios-análise-de-resultados-e-limitações)
 7. [Autores](#7-autores)
 
 ---
@@ -27,7 +27,7 @@ O chatbot é capaz de responder a perguntas em linguagem natural com base em uma
 
 ### 2. Arquitetura da Solução
 
-A solução foi implementada utilizando um **API Gateway** como ponto de entrada (endpoint) para receber notificações de webhook do Telegram. Esse gateway repassa as requisições para uma aplicação servidora rodando em uma instância **Amazon EC2**, que centraliza toda a lógica de negócio.
+A solução foi implementada utilizando um **API Gateway** como ponto de entrada para receber notificações de webhook do Telegram. Esse gateway repassa as requisições para a aplicação principal, que roda em um contêiner Docker numa instância **Amazon EC2** e centraliza toda a lógica de negócio.
 
 Os componentes principais são:
 
@@ -35,36 +35,34 @@ Os componentes principais são:
   - **Telegram:** Plataforma de mensagens utilizada para a interação do usuário com o chatbot.
 
 - **Computação e Lógica da Aplicação:**
-  - **Amazon API Gateway:** Atua como front-end da aplicação, recebendo as chamadas da API do Telegram de forma segura e gerenciável.
-  - **Amazon EC2:** Instância que hospeda a aplicação principal em Python (servidor Flask/Gunicorn). Ela gerencia todo o fluxo de processamento do RAG e a lógica de conversação.
+  - **Amazon EC2:** Instância que hospeda a aplicação containerizada com Docker. Ela gerencia todo o fluxo de processamento do RAG e a lógica de conversação.
   - **LangChain:** Framework utilizado para orquestrar toda a lógica do RAG, conectando a base de conhecimento, os modelos de IA e a memória da conversa.
 
 - **Base de Conhecimento (RAG):**
   - **Amazon S3:** Bucket utilizado para armazenar de forma permanente os documentos jurídicos originais em formato PDF.
-  - **ChromaDB:** Banco de dados vetorial que armazena os *embeddings* dos documentos. É a base de conhecimento que o LangChain consulta para encontrar os trechos de texto relevantes para a pergunta do usuário.
+  - **ChromaDB:** Banco de dados vetorial que armazena os *embeddings* dos documentos. É a base de conhecimento que o LangChain consulta para encontrar os trechos de texto relevantes.
   - **Amazon Bedrock:** Serviço de IA Generativa da AWS, utilizado para duas finalidades:
-    1.  **Geração de Embeddings:** Com o modelo `amazon.titan-embed-text-v1`, para converter os textos dos documentos e as perguntas dos usuários em vetores numéricos.
-    2.  **Geração de Texto:** Com o modelo `amazon.titan-text-premier-v1:0`, para formular as respostas finais com base no contexto recuperado.
+    1.  **Geração de Embeddings:** Com o modelo `amazon.titan-embed-text-v2:0`, para converter os textos dos documentos e as perguntas dos usuários em vetores numéricos.
+    2.  **Geração de Texto:** Com o modelo `mistral.mistral-large-2402-v1:0`, para formular as respostas finais com base no contexto recuperado.
 
 - **Monitoramento:**
-  - **Amazon CloudWatch:** Serviço utilizado para armazenar e visualizar os logs gerados pela aplicação, permitindo o monitoramento da atividade do chatbot.
+  - **Amazon CloudWatch:** Serviço utilizado para armazenar e visualizar os logs gerados pela aplicação (configuração pendente).
 
-  ### Diagrama do Fluxo do Chatbot
-  
+ #### Diagrama do Fluxo do Chatbot
+ 
 <p align="center">
-  <img src="diagrama_flow.png" alt="Diagrama do Chatbot" width="600"/>
+  <img src="diagrama_flow.png" alt="Diagrama do Chatbot" width="800"/>
 </p>
-  
-  > Este diagrama representa o fluxo de dados entre o usuário, EC2, ChromaDB, Bedrock e CloudWatch.
-  
-  ---
-
----
+ 
+ > Este diagrama representa o fluxo de dados entre o usuário, Telegram, API Gateway, EC2, ChromaDB e Bedrock.
+ 
+ ---
 
 ### 3. Tecnologias Utilizadas
 
 - **Linguagem:** Python 3.10
-- **Cloud:** AWS (EC2, S3, Bedrock, CloudWatch, API Gateway, IAM)
+- **Cloud:** AWS (EC2, S3, Bedrock, IAM)
+- **Containerização:** Docker, Docker Compose
 - **Frameworks de IA:** LangChain, LangChain AWS
 - **Banco de Dados Vetorial:** ChromaDB
 - **Servidor Web:** Flask, Gunicorn
@@ -75,69 +73,78 @@ Os componentes principais são:
 
 ### 4. Como Executar o Sistema
 
-Siga os passos abaixo para configurar e executar o projeto.
+Siga os passos abaixo para configurar e executar o projeto utilizando Docker.
 
 #### Pré-requisitos
 - Conta na AWS com permissões para criar e gerenciar EC2, S3, IAM Roles, API Gateway e Bedrock.
-- Python 3.10 ou superior instalado.
+- Git, Docker e Docker Compose instalados.
+- Um bucket no S3 populado com os documentos `.pdf`.
 - Um bot criado no Telegram para obter o Token de acesso.
 
-#### a. Configuração do Ambiente AWS
-1.  **Bucket S3:** Crie um bucket no S3 e faça o upload dos seus documentos `.pdf`.
-2.  **IAM Role:** Crie uma IAM Role para a instância EC2 com as seguintes políticas gerenciadas pela AWS:
-    - `AmazonS3ReadOnlyAccess`
-    - `AmazonBedrockFullAccess`
-    - `CloudWatchLogsFullAccess`
-3.  **Instância EC2:** Lance uma instância EC2 (ex: `t2.micro` com Ubuntu Server), anexe a IAM Role criada e configure um Security Group para permitir tráfego de entrada na porta `5000`.
-4.  **API Gateway:** Crie um API Gateway com uma rota (ex: `/webhook`, método `POST`) e configure a integração para apontar para o IP público e a porta da sua instância EC2.
+#### a. Configuração do Projeto
 
-#### b. Configuração do Projeto na EC2
-1.  Conecte-se à sua instância EC2 via SSH.
-2.  Clone o repositório:
+### Ainda vou ajustar essa parte quando subir para o repo da Compass
+
+1.  Clone o repositório:
     ```bash
-    git clone [URL_DO_REPOSITORIO]
-    cd [NOME_DA_PASTA_DO_REPOSITORIO]
+    git clone [Ainda vou adicionar o url do repo]
+    cd [Ainda vou adicionar o nome da pasta do repo]
     ```
-3.  Crie e ative um ambiente virtual:
-    ```bash
-    python3 -m venv .venv
-    source .venv/bin/activate
-    ```
-4.  Instale as dependências:
-    ```bash
-    pip install -r requirements.txt
-    ```
-5.  Crie e configure o arquivo de variáveis de ambiente (`.env`):
+2.  Crie e configure o arquivo de variáveis de ambiente `.env` na raiz do projeto:
     ```env
     TELEGRAM_BOT_API_KEY=[TOKEN_DO_TELEGRAM]
     S3_BUCKET_NAME=[NOME_DO_BUCKET_S3]
     AWS_REGION_NAME=us-east-1
     ```
 
-#### c. Execução do Chatbot
+#### b. Execução com Docker Compose
 1.  **Ingestão de Dados:** Execute o script de ingestão para processar os documentos do S3 e criar a base de dados no ChromaDB.
     ```bash
-    python scripts/ingest_data.py
+    # Garanta que o Docker esteja rodando
+    # Apague qualquer base de dados antiga, se necessário
+    sudo rm -rf chroma_db
+
+    # Construa a imagem Docker
+    sudo docker compose build
+
+    # Execute o script de ingestão
+    sudo docker compose run --rm chatbot python -m scripts.ingest_data
     ```
-2.  **Iniciar o Servidor:** Após a conclusão da ingestão, inicie o servidor Gunicorn para que a aplicação comece a receber requisições do API Gateway.
+2.  **Iniciar o Servidor:** Após a conclusão da ingestão, inicie o servidor Gunicorn.
     ```bash
-    gunicorn --bind 0.0.0.0:5000 src.app:app
+    sudo docker compose up -d
     ```
+
+#### c. Configurar o Webhook do Telegram
+Após iniciar o serviço, você precisa dizer ao Telegram para onde enviar as mensagens. Utilize um `API Gateway` ou uma ferramenta como `ngrok` para expor a porta 5000 da sua EC2 publicamente.
+```bash
+# Ainda vou ajustar essa parte quando subir para o repo da Compass
+curl -X POST [https://api.telegram.org/bot](https://api.telegram.org/bot)<SEU_TOKEN>/setWebhook -H "Content-Type: application/json" -d '{"url": "<URL_PUBLICA_DA_APLICACAO>/webhook"}'
+```
 
 ---
 
 ### 5. Acesso ao Chatbot
 
 Para interagir com o chatbot, acesse o link público do bot no Telegram.
-**Link:** `[URL_DO_SEU_BOT_NO_TELEGRAM]`
+
+**Link:** `http://t.me/rag_judicial_bot`
 
 ---
 
-### 6. Dificuldades e Soluções
+### 6. Desafios, Análise de Resultados e Limitações
 
-- **Decisão Arquitetural:** O projeto apresentava uma aparente contradição entre o diagrama de arquitetura (que incluía o API Gateway) e o texto (que sugeria gerenciamento 100% na EC2). A solução foi seguir o diagrama como guia principal, utilizando o API Gateway como endpoint e a EC2 como o host da lógica de negócio, interpretando "gerenciamento" como o processamento da aplicação e não o ponto de entrada da rede.
+Apesar da arquitetura estar 100% funcional, os testes de qualidade revelaram uma **inconsistência na precisão das respostas** para perguntas jurídicas complexas. O chatbot frequentemente falhava em extrair os fundamentos legais corretos ou as provas decisivas citadas nos acórdãos.
 
-- **Gerenciamento de Credenciais AWS:** A utilização de uma **IAM Role** anexada à instância EC2 foi uma solução de segurança e boas práticas fundamental, eliminando a necessidade de armazenar credenciais de acesso em arquivos de configuração e permitindo que a aplicação acesse os serviços da AWS de forma segura.
+**Diagnóstico:** Após um extenso processo de depuração e otimização, a causa raiz foi identificada como uma **limitação do modelo de embedding** (`amazon.titan-embed-text-v2:0`) disponível para o projeto. Este modelo não se mostrou capaz de capturar as nuances semânticas de textos jurídicos densos, resultando em uma recuperação de contexto (Retrieval) imprecisa. O sistema falhava em encontrar os trechos corretos dos documentos, levando o LLM (mesmo um modelo poderoso como o Mistral Large) a gerar respostas incorretas ou alucinadas.
+
+Durante o desenvolvimento, diversas técnicas foram aplicadas na tentativa de mitigar este problema:
+- Upgrade do LLM de `Amazon Titan` para `Mistral Large`.
+- Implementação de um prompt avançado com a técnica de "Chain of Thought".
+- Refatoração da estratégia de RAG para utilizar o `Parent Document Retriever`.
+- Testes com diferentes modelos de embedding disponíveis.
+
+**Conclusão:** O projeto foi um sucesso na implementação da arquitetura RAG de ponta a ponta na AWS, mas também serviu para demonstrar um desafio prático da tecnologia: a performance de um sistema RAG é criticamente dependente da qualidade do seu modelo de embedding, especialmente em domínios de conhecimento altamente especializados como o Direito.
 
 ---
 
@@ -146,6 +153,6 @@ Para interagir com o chatbot, acesse o link público do bot no Telegram.
 Este projeto foi desenvolvido pela **Squad 6** como parte do programa de bolsas da Compass UOL.
 
 * [Agnes Ludmilla](https://github.com/agnesludmila)
+* [Yuri Kiev](https://github.com/YuriKievBarreto)
 * [Rafaela Bezerra](https://github.com/Rafa01B)
 * [Rudhá Esmeraldo](https://github.com/rudhaesmeraldo)
-* [Yuri Kiev](https://github.com/YuriKievBarreto)
