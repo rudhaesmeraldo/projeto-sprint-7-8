@@ -6,9 +6,6 @@ from langchain.prompts import PromptTemplate
 from langchain_aws import ChatBedrock, BedrockEmbeddings
 from langchain.memory import ConversationBufferWindowMemory
 from langchain.chains import ConversationalRetrievalChain
-from langchain.storage import InMemoryStore
-from langchain.retrievers import ParentDocumentRetriever
-from langchain.text_splitter import RecursiveCharacterTextSplitter
 from .aws_utils import inicializar_bedrock_client
 
 CHROMA_PATH = '/app/chroma_db'
@@ -23,21 +20,10 @@ modelo_embedding = BedrockEmbeddings(
     model_id='amazon.titan-embed-text-v2:0'
 )
 
-# carrega o vector store já persistido pelo script de ingestão
-vectorstore = Chroma(
-    collection_name="split_parents",
-    embedding_function=modelo_embedding,
-    persist_directory=CHROMA_PATH
-)
-
-# recria a estrutura do parent document retriever para poder fazer as buscas. o docstore pode ser recriado vazio, pois a informação principal está no vectorstore
-store = InMemoryStore()
-child_splitter = RecursiveCharacterTextSplitter(chunk_size=400, chunk_overlap=100)
-
-retriever = ParentDocumentRetriever(
-    vectorstore=vectorstore,
-    docstore=store,
-    child_splitter=child_splitter,
+# carrega a base de dados vetorial que já foi criada pelo script ingest
+db = Chroma(
+    persist_directory=CHROMA_PATH,
+    embedding_function=modelo_embedding
 )
 
 # carrega o llm que vai gerar as respostas
@@ -48,7 +34,7 @@ llm = ChatBedrock(
 print('✅ Componentes do chatbot prontos.')
 
 # lista de saudações para identificar interações
-SAUDACOES_KEYWORDS = ['olá', 'oi', 'bom dia', 'boa tarde', 'boa noite', 'saudações', 'e aí', 'fala', 'Opa', 'tudo bem', 'como vai', 'tudo certo', 'tudo em paz', 'salve']
+SAUDACOES_KEYWORDS = ['olá', 'oi', 'opa', 'salve', 'bom', 'dia', 'boa', 'tarde', 'noite', 'tudo', 'bem', 'ajuda']
 
 # dicionário para armazenar as instâncias de memória por id do chat
 chat_memories = {}
@@ -112,7 +98,9 @@ def gera_resposta(pergunta_do_usuario, chat_id):
         template=prompt_template
     )
     
-    # cria a cadeia de conversa com o novo retriever
+    retriever = db.as_retriever(search_kwargs={'k': 5})
+    
+    # cria a cadeia de conversa com o retriever
     cadeia_conversa = ConversationalRetrievalChain.from_llm(
         llm=llm,
         retriever=retriever,

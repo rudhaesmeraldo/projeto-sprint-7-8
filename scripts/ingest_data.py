@@ -1,14 +1,12 @@
 import os
 import boto3
 import shutil
-import time # Adicionado para a pausa entre os lotes
+import time
 from dotenv import load_dotenv
 from langchain_community.document_loaders import PyPDFLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_aws import BedrockEmbeddings
 from langchain_community.vectorstores import Chroma
-from langchain.storage import InMemoryStore
-from langchain.retrievers import ParentDocumentRetriever
 from src.aws_utils import inicializar_bedrock_client
 
 # carrega as variáveis de ambiente do arquivo .env
@@ -62,45 +60,22 @@ def processar_e_salvar_dados(bedrock_client):
 
     print(f'✅ {len(documentos)} páginas de documentos carregadas com sucesso.')
 
-    # splitter para os documentos 'pai'
-    parent_splitter = RecursiveCharacterTextSplitter(chunk_size=2000, chunk_overlap=200)
-
-    # splitter para os 'filhos', que serão usados para a busca de similaridade
-    child_splitter = RecursiveCharacterTextSplitter(chunk_size=400, chunk_overlap=100)
+    # usa um único splitter para dividir os documentos em chunks
+    text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
+    chunks = text_splitter.split_documents(documentos)
+    print(f'✅ Documentos divididos em {len(chunks)} chunks.')
     
     # modelo de embedding
     modelo_embedding = BedrockEmbeddings(client=bedrock_client, model_id='amazon.titan-embed-text-v2:0')
 
-    # vector store que irá armazenar os embeddings dos 'filhos'
-    vectorstore = Chroma(
-        collection_name='split_parents', 
-        embedding_function=modelo_embedding,
+    print(f'⏳ Gerando embeddings e salvando no ChromaDB (isso pode levar um tempo)...')
+    # cria a base de dados a partir dos chunks diretamente, de forma mais robusta
+    db = Chroma.from_documents(
+        chunks, 
+        modelo_embedding, 
         persist_directory=CHROMA_PATH
     )
-
-    # armazenador em memória para os documentos 'pai'
-    store = InMemoryStore()
-
-    print('⏳ Configurando o ParentDocumentRetriever...')
-    retriever = ParentDocumentRetriever(
-        vectorstore=vectorstore,
-        docstore=store,
-        child_splitter=child_splitter,
-        parent_splitter=parent_splitter,
-    )
-
-    tamanho_lote = 16 
-    total_documentos = len(documentos)
-
-    print(f'⏳ Adicionando documentos em lotes de {tamanho_lote}...')
-    
-    for i in range(0, total_documentos, tamanho_lote):
-        lote = documentos[i : i + tamanho_lote]
-        print(f'⏳ Processando lote {i//tamanho_lote + 1}/{(total_documentos + tamanho_lote - 1)//tamanho_lote} (documentos {i+1} a {min(i+tamanho_lote, total_documentos)})')
-        retriever.add_documents(lote)
-        print(f'⏳ pausando por 1 segundo')
-        time.sleep(1) # pausa de 1 segundo para evitar throttling
-
+    db.persist()
     print(f'✅ Base de dados vetorial criada com sucesso em: {CHROMA_PATH}')
     
     # limpa a pasta temporária após a conclusão
