@@ -46,7 +46,7 @@ Os componentes principais são:
     2.  **Geração de Texto:** Com o modelo `mistral.mistral-large-2402-v1:0`, para formular as respostas finais com base no contexto recuperado.
 
 - **Monitoramento:**
-  - **Amazon CloudWatch:** Serviço utilizado para armazenar e visualizar os logs gerados pela aplicação (configuração pendente).
+  - **Amazon CloudWatch:** Serviço utilizado para armazenar e visualizar de forma centralizada todos os logs de interação e erros gerados pela aplicação.
 
  #### Diagrama do Fluxo do Chatbot
  
@@ -61,7 +61,7 @@ Os componentes principais são:
 ### 3. Tecnologias Utilizadas
 
 - **Linguagem:** Python 3.10
-- **Cloud:** AWS (EC2, S3, Bedrock, IAM)
+- **Cloud:** AWS (EC2, S3, Bedrock, API Gateway, IAM, CloudWatch)
 - **Containerização:** Docker, Docker Compose
 - **Frameworks de IA:** LangChain, LangChain AWS
 - **Banco de Dados Vetorial:** ChromaDB
@@ -73,7 +73,7 @@ Os componentes principais são:
 
 ### 4. Como Executar o Sistema
 
-Siga os passos abaixo para configurar e executar o projeto utilizando Docker.
+Siga os passos abaixo para configurar e executar o projeto.
 
 #### Pré-requisitos
 - Conta na AWS com permissões para criar e gerenciar EC2, S3, IAM Roles, API Gateway e Bedrock.
@@ -95,34 +95,48 @@ Siga os passos abaixo para configurar e executar o projeto utilizando Docker.
     TELEGRAM_BOT_API_KEY=[TOKEN_DO_TELEGRAM]
     S3_BUCKET_NAME=[NOME_DO_BUCKET_S3]
     AWS_REGION_NAME=us-east-1
+    CLOUDWATCH_LOG_GROUP=[NOME_PARA_O_GRUPO_DE_LOGS]
     ```
 
-#### b. Execução com Docker Compose
-1.  **Ingestão de Dados:** Execute o script de ingestão para processar os documentos do S3 e criar a base de dados no ChromaDB.
+#### b. Ingestão dos Dados
+
+Este é um passo único de configuração para processar os documentos do S3 e popular a base de dados vetorial. Execute o comando a partir da raiz do projeto na sua máquina ou na instância EC2.
+
+1.  **Instale as dependências na máquina host:**
     ```bash
-    # Garanta que o Docker esteja rodando
-    # Apague qualquer base de dados antiga, se necessário
-    sudo rm -rf chroma_db
-
-    # Construa a imagem Docker
-    sudo docker compose build
-
-    # Execute o script de ingestão
-    sudo docker compose run --rm chatbot python -m scripts.ingest_data
+    pip install -r requirements.txt
     ```
-2.  **Iniciar o Servidor:** Após a conclusão da ingestão, inicie o servidor Gunicorn.
+2.  **Execute o script de ingestão:**
     ```bash
-    sudo docker compose up -d
+    python -m scripts.ingest_data
+    ```
+*Obs: Garanta que suas credenciais da AWS estejam configuradas no ambiente (preferencialmente via IAM Role na EC2) para que o script possa acessar o S3 e o Bedrock.*
+
+#### c. Execução do Servidor com Docker Compose
+
+Com a base de dados `chroma_db` criada localmente pelo script de ingestão, inicie o servidor do chatbot.
+
+1.  **Construa a imagem e inicie o serviço:**
+    ```bash
+    sudo docker compose up --build -d
+    ```
+2.  **Para visualizar os logs em tempo real:**
+    ```bash
+    sudo docker compose logs -f
+    ```
+3.  **Para parar o serviço:**
+    ```bash
+    sudo docker compose down
     ```
 
-#### c. Configurar o Webhook do Telegram
-Após iniciar o serviço, você precisa dizer ao Telegram para onde enviar as mensagens. Utilize um `API Gateway` ou uma ferramenta como `ngrok` para expor a porta 5000 da sua EC2 publicamente.
+#### d. Configurar o Webhook do Telegram
+
+Após iniciar o serviço, você precisa dizer ao Telegram para onde enviar as mensagens, utilizando o endpoint público do seu API Gateway.
+
+### Ainda vou ajustar essa parte quando subir para o repo da Compass
 ```bash
-# Ainda vou ajustar essa parte quando subir para o repo da Compass
-curl -X POST [https://api.telegram.org/bot](https://api.telegram.org/bot)<SEU_TOKEN>/setWebhook -H "Content-Type: application/json" -d '{"url": "<URL_PUBLICA_DA_APLICACAO>/webhook"}'
+curl -X POST https://api.telegram.org/bot<SEU_TOKEN>/setWebhook -H "Content-Type: application/json" -d '{"url": "<URL_PUBLICA_DA_APLICACAO>/webhook"}'
 ```
-
----
 
 ### 5. Acesso ao Chatbot
 
